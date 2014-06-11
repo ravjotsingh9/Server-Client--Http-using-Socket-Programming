@@ -19,135 +19,156 @@ import java.util.Scanner;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.DefaultCaret;
 
-public class Client {
+public class Client 
+{
 	private int portNum = 59063;
 	private Socket clientsocket = null;
-	private String ip = "";
+	private String ip = "localhost";
+	private String filename= "";
 	
-	public static void main(String args[]){
-		Client wc = null;
-		try {
-			wc = new Client();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Client unknown host exception-"+e.getMessage());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Client io exception-"+e.getMessage());
-		}
-		wc.userInterface();;
+	public static void main(String args[])
+	{
+		Client client = null;
+		client = new Client();
+		client.UI();;
 	}
-	
-	public Client() throws UnknownHostException, IOException{
-		
+	public Client()
+	{
+		JOptionPane.showMessageDialog(null,"MyBrowser is tested and verified with only the given Server."
+				+ "","Info Regarding MyBrowser",JOptionPane.INFORMATION_MESSAGE);
 	}
-	
-	private void sendRequest(String filename, String ip, int port){
+	private int sendRequest(String filename, String ip, int port)
+	{
 		PrintWriter output = null;
-		try {
+		try 
+		{
 			clientsocket = new Socket(ip, port);
-			output = new PrintWriter(new BufferedWriter(new OutputStreamWriter(clientsocket.getOutputStream())));
-			
-			//Send filename to the server
+			output = new PrintWriter(new BufferedWriter(new OutputStreamWriter(clientsocket.getOutputStream())));	
+			//Send request to the server
 			output.print("GET /"+filename+" HTTP/1.1\r\n\r\n");
-			output.flush();
-			System.out.println("request send");
-			
-		} catch (IOException e) {
+			output.flush();	
+			return 1;
+		} 
+		catch (IOException e) 
+		{
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(e.getMessage());
+			return -1;
 		}
 	}
 	
-	public void userInterface(){
-		JFrame guiFrame = new JFrame();
+	public void UI()
+	{
+		// frame
+		JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("MyBrowser");
+        frame.setSize(1100,500);
+        frame.setLocationRelativeTo(null);
         
-        //to make sure the program exits when the frame closes
-        guiFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        guiFrame.setTitle("Web Client");
-        guiFrame.setSize(1100,500);
-        
-      //This will center the JFrame in the middle of the screen
-        guiFrame.setLocationRelativeTo(null);
-        
-      //The first JPanel contains a JLabel and JCombobox
-        JPanel comboPanel = new JPanel();
-        JLabel comboLbl = new JLabel("Enter the file name: ");
+        //Declaring controls 
+        JPanel Panel = new JPanel();
+        JLabel Lbl = new JLabel("File name: ");
         final JTextField txt1 = new JTextField(20);
+        txt1.setText(filename);
         JLabel Lblip = new JLabel("IP Address: ");
         final JTextField txtip = new JTextField(20);
+        txtip.setText(ip);
         JLabel Lblport = new JLabel("Port Number: ");
         final JTextField txtport = new JTextField(20);
+        // submit button
         final JButton submit = new JButton( "Submit");
         final JTextArea textarea = new JTextArea(25,90);
-        //DefaultCaret caret = (DefaultCaret)textarea.getCaret();
-        //caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-        //textarea.setAutoscrolls(true);
+        
         JScrollPane areaScrollPane = new JScrollPane(textarea);
         areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        
-        //areaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        
-        comboPanel.add(comboLbl);
-        comboPanel.add(txt1);
-        comboPanel.add(Lblip);
-        comboPanel.add(txtip);
-        comboPanel.add(Lblport);
-        comboPanel.add(txtport);
-        comboPanel.add(submit);
-        //comboPanel.add(textarea);
-        comboPanel.add(areaScrollPane);
+        // adding controls to panels       
+        Panel.add(Lbl);
+        Panel.add(txt1);
+        Panel.add(Lblip);
+        Panel.add(txtip);
+        Panel.add(Lblport);
+        Panel.add(txtport);
+        Panel.add(submit);
+        Panel.add(areaScrollPane);
         textarea.setLineWrap(true);
         textarea.setWrapStyleWord(true);
         textarea.setEditable(false);
-        comboPanel.setVisible(true);
+        Panel.setVisible(true);
         
-      //The ActionListener class is used to handle the event that happens when the user clicks the button
-        submit.addActionListener(new ActionListener() {
-			
+        // listener for submit button
+        submit.addActionListener(new ActionListener() 
+        {	
 			@Override
-			public void actionPerformed(ActionEvent event) {
+			public void actionPerformed(ActionEvent event) 
+			{
 				// TODO Auto-generated method stub
 				//txt1.disable();
-				submit.setEnabled(false);
+				
 				Object source = event.getSource();
-				ip = txtip.getText();
-				portNum = Integer.parseInt(txtport.getText());
-				if(source == submit){
-					String filename = txt1.getText();
-					sendRequest(filename, ip, portNum);
+				if(source == submit)
+				{
 					
+					if((txtip.getText().isEmpty()==true) || (txtport.getText().isEmpty()==true) || (txt1.getText().isEmpty()==true ))
+					{
+						JOptionPane.showMessageDialog(null,"Value Not field","All field must be provided.",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+					ip = txtip.getText();
+					try
+					{
+						portNum = Integer.parseInt(txtport.getText());
+					}
+					catch(NumberFormatException e)
+					{
+						JOptionPane.showMessageDialog(null,"Port Number must be integer.","Port Number!",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+					String filename = txt1.getText();
+					submit.setEnabled(false);
+					if (sendRequest(filename, ip, portNum)==-1)
+					{
+						JOptionPane.showMessageDialog(null,"Recheck the value of IP or Port.","Could not find the server",JOptionPane.WARNING_MESSAGE);
+						submit.setEnabled(true);
+						return;
+					}
 					BufferedReader in = null;
-					try {
+					try 
+					{
 						in = new BufferedReader(new InputStreamReader(clientsocket.getInputStream()));
 						String line = in.readLine();
 						System.out.println("Status="+line);
 						textarea.setText(line);
-						
 						String request;
-						while((request = in.readLine()) != null){
+						while((request = in.readLine()) != null)
+						{
 							System.out.println(request);
 							textarea.setText(textarea.getText()+"\n"+request);
-							//textarea.append(request);
-							//textarea.setCaretPosition(textarea.getDocument().getLength());
 						}
-					} catch (IOException e) {
+					} 
+					catch (IOException e) 
+					{
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.out.println(e.getMessage());
 					}
-					finally{
-						System.out.println("Client connection terminated");
-						try {
+					finally
+					{
+						System.out.println("Client: connection terminated");
+						try 
+						{
 							clientsocket.close();
-						} catch (IOException e) {
+						} 
+						catch (IOException e) 
+						{
 							// TODO Auto-generated catch block
-							System.out.println("Client connection closed. "+e.getMessage());
+							System.out.println("Client: termination "+e.getMessage());
 						}
 					}
 				}
@@ -155,9 +176,7 @@ public class Client {
 			}
 		});
         
-        guiFrame.add(comboPanel);
-        
-        //make sure the JFrame is visible
-        guiFrame.setVisible(true);
+        frame.add(Panel);
+        frame.setVisible(true);
 	}
 }
